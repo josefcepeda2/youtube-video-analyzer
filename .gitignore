@@ -65,9 +65,14 @@ appsettings.Development.json
 
 # Application output
 /results/
-urls.txt
 
 # Ignore generated markdown files, but not the main ones
 *.md
 !README.md
-!Spec.md
+!spec.md
+!old-spec.md
+!sample-results/
+!sample-results/*.md
+
+# Re-add urls.txt
+!YouTubeHelper/urls.txt
