@@ -72,4 +72,7 @@ appsettings.Development.json
 !spec.md
 !old-spec.md
 !sample-results/
+!sample-results/*.md
+
+# Re-add urls.txt
 !YouTubeHelper/urls.txt
