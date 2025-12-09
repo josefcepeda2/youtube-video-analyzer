@@ -70,4 +70,5 @@ urls.txt
 # Ignore generated markdown files, but not the main ones
 *.md
 !README.md
-!Spec.md
+!spec.md
+!sample-results/
