@@ -9,17 +9,21 @@ public class VideoAnalyzer
     private readonly HttpClient _httpClient;
     private readonly string _apiKey;
     private readonly string _model;
+    private readonly int _maxRetries;
+    private readonly TimeSpan _initialDelay;
 
-    public VideoAnalyzer(HttpClient httpClient, string apiKey, string model)
+    public VideoAnalyzer(HttpClient httpClient, string apiKey, string model, int maxRetries, TimeSpan initialDelay)
     {
         _httpClient = httpClient;
         _apiKey = apiKey;
         _model = model;
+        _maxRetries = maxRetries;
+        _initialDelay = initialDelay;
     }
 
-    public async Task<string> AnalyzeVideoAsync(string transcript)
+    public async Task<string> AnalyzeVideoAsync(string transcript, string videoUrl)
     {
-        string prompt = $"Please provide a detailed analysis and summary of the following YouTube video transcript:\n\n{transcript}";
+        string prompt = $"Please provide a detailed analysis and summary of the following YouTube video transcript, ensuring that no minor points or nuances are missed. Include the video URL {videoUrl} in the analysis:\n\n{transcript}";
 
         var requestBody = new
         {
@@ -39,11 +43,10 @@ public class VideoAnalyzer
         
         Console.WriteLine($"Sending transcript for analysis...");
 
-        const int maxRetries = 5;
         int retryCount = 0;
-        TimeSpan delay = TimeSpan.FromSeconds(5); // Initial delay
+        TimeSpan delay = _initialDelay;
 
-        while (retryCount < maxRetries)
+        while (retryCount < _maxRetries)
         {
             try
             {
@@ -77,7 +80,7 @@ public class VideoAnalyzer
                 {
                     retryCount++;
                     var errorContent = await response.Content.ReadAsStringAsync();
-                    if (retryCount >= maxRetries)
+                    if (retryCount >= _maxRetries)
                     {
                         return $"Error: {response.StatusCode} - Max retries reached. {errorContent}";
                     }
@@ -111,18 +114,18 @@ public class VideoAnalyzer
 
                     Console.WriteLine($"Rate limit hit. Retrying in {totalDelay.TotalSeconds:F1} seconds...");
                     await Task.Delay(totalDelay);
-                    delay = TimeSpan.FromSeconds(Math.Min(delay.TotalSeconds * 2, 120)); // Exponential backoff
+                    delay *= 2; // Exponential backoff
                 }
                 else
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
-                    return $"Error: {response.StatusCode} - {errorContent}";
+                    return $"Error: {response.StatusCode}. Details: {errorContent}";
                 }
             }
-            catch (HttpRequestException ex) // Catch network-related errors
+            catch (Exception ex)
             {
                 retryCount++;
-                if (retryCount >= maxRetries)
+                if (retryCount >= _maxRetries)
                 {
                     return $"Error: HttpRequestException after max retries. {ex.Message}";
                 }

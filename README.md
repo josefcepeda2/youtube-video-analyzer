@@ -25,19 +25,34 @@ This C# console application automates the process of analyzing YouTube video tra
     cd <repository-directory>
     ```
 
-2.  **Configure your API Key:**
-    Create a file named `appsettings.json` in the `YouTubeHelper` directory with the following content:
+2.  **Configure your API Key (Recommended for Development):**
+    Use the .NET Secret Manager to securely store your API key. This prevents you from accidentally checking it into source control.
+    ```bash
+    dotnet user-secrets init --project YouTubeHelper/YouTubeHelper.csproj
+    dotnet user-secrets set "GeminiApiKey" "YOUR_API_KEY_HERE" --project YouTubeHelper/YouTubeHelper.csproj
+    ```
+    Replace `"YOUR_API_KEY_HERE"` with your actual Google Gemini API key.
 
+3.  **Configure Application Settings:**
+    In the `YouTubeHelper` directory, open the `appsettings.json` file. You can configure the model and file paths here.
     ```json
     {
-      "GeminiApiKey": "YOUR_API_KEY_HERE",
-      "GeminiModel": "gemini-2.5-pro"
+      "GeminiModel": "gemini-2.5-pro",
+      "UrlsFilePath": "urls.txt",
+      "MaxRetries": 5,
+      "InitialDelaySeconds": 5,
+      "RequestDelaySeconds": 60
     }
     ```
 
-    Replace `"YOUR_API_KEY_HERE"` with your actual Google Gemini API key.
+4.  **Create URLs File:**
+    Create a file named `urls.txt` (or the name you specified in `appsettings.json`) in the `YouTubeHelper` directory. Add one YouTube video URL per line.
+    ```
+    https://www.youtube.com/watch?v=your_video_id_1
+    https://www.youtube.com/watch?v=your_video_id_2
+    ```
 
-3.  **Restore Dependencies:**
+5.  **Restore Dependencies:**
     Run the following command in the root directory to restore the necessary NuGet packages.
     ```bash
     dotnet restore
@@ -45,36 +60,31 @@ This C# console application automates the process of analyzing YouTube video tra
 
 ## Usage
 
-1.  **Add Video URLs:**
-    Open the `YouTubeHelper/Program.cs` file and modify the `videoUrls` list to include the YouTube videos you want to analyze.
-
-    ```csharp
-    // ...
-    var videoUrls = new List<string>
-    {
-        "https://www.youtube.com/watch?v=your_video_id_1",
-        "https://www.youtube.com/watch?v=your_video_id_2"
-    };
-    // ...
+1.  **Run the Application (Development):**
+    To ensure your user secrets are loaded, run the application with the `DOTNET_ENVIRONMENT` variable set to `Development`.
+    ```powershell
+    # For PowerShell
+    $env:DOTNET_ENVIRONMENT="Development"; dotnet run --project YouTubeHelper/YouTubeHelper.csproj
     ```
-
-2.  **Run the Application:**
-    Execute the following command from the `YouTubeHelper` directory:
     ```bash
-    dotnet run
+    # For Bash
+    export DOTNET_ENVIRONMENT=Development; dotnet run --project YouTubeHelper/YouTubeHelper.csproj
     ```
 
-3.  **View Results:**
-    The application will create a `results` directory within the `YouTubeHelper` project folder. Inside, you will find a markdown file for each analyzed video, containing the summary provided by the Gemini API.
+2.  **View Results:**
+    The application will create a `results` directory within the build output folder (e.g., `YouTubeHelper/bin/Debug/net10.0/results`). Inside, you will find a markdown file for each analyzed video.
 
 ## Project Structure
 
 -   `YouTubeHelper/`: The main console application project.
-    -   `Program.cs`: The entry point of the application. Contains the list of videos to be analyzed.
+    -   `Program.cs`: The composition root for DI and configuration.
+    -   `AnalysisService.cs`: Orchestrates the main application workflow.
     -   `VideoAnalyzer.cs`: Handles the interaction with the Gemini API.
     -   `TranscriptService.cs`: Uses `YoutubeExplode` to fetch video transcripts.
-    -   `appsettings.json`: Configuration file for the API key and model.
-    -   `results/`: Directory where the analysis markdown files are saved.
+    -   `IYouTubeClient.cs` / `YouTubeClientWrapper.cs`: Abstraction over `YoutubeExplode` for testability.
+    -   `appsettings.json`: Configuration file for the application.
+    -   `urls.txt`: Default file for listing video URLs.
 -   `YouTubeHelper.Tests/`: The xUnit test project for the application.
     -   `VideoAnalyzerTests.cs`: Contains unit tests for the `VideoAnalyzer` service.
-    -   `TranscriptServiceTests.cs`: Contains placeholder unit tests for the `TranscriptService`.
+    -   `TranscriptServiceTests.cs`: Contains unit tests for the `TranscriptService`.
+-   `Spec.md`: The detailed technical specification for the project.

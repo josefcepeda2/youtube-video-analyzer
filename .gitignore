@@ -52,3 +52,22 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# User secrets
+secrets.json
+*.secrets.json
+
+# Local development settings
+appsettings.Development.json
+
+# User-specific files
+*.csproj.user
+
+# Application output
+/results/
+urls.txt
+
+# Ignore generated markdown files, but not the main ones
+*.md
+!README.md
+!Spec.md
