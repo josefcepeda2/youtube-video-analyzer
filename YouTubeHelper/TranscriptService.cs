@@ -7,35 +7,37 @@ using YoutubeExplode.Videos.ClosedCaptions;
 
 public class TranscriptService
 {
-    private readonly YoutubeClient _youtube;
+    private readonly IYouTubeClient _youtube;
 
-    public TranscriptService(YoutubeClient youtube)
+    public TranscriptService(IYouTubeClient youtube)
     {
         _youtube = youtube;
     }
 
     public async Task<Video> GetVideoInfoAsync(string videoUrl)
     {
-        return await _youtube.Videos.GetAsync(videoUrl);
+        return await _youtube.GetVideoAsync(videoUrl);
     }
 
     public async Task<string?> GetTranscriptAsync(string videoUrl)
     {
-        var trackManifest = await _youtube.Videos.ClosedCaptions.GetManifestAsync(videoUrl);
-        var trackInfo = trackManifest.GetByLanguage("en");
-
-        if (trackInfo == null)
+        var trackManifest = await _youtube.GetClosedCaptionManifestAsync(videoUrl);
+        
+        try
         {
+            var trackInfo = trackManifest.GetByLanguage("en");
+            var transcript = await _youtube.GetClosedCaptionTrackAsync(trackInfo);
+            var transcriptText = new StringBuilder();
+            foreach (var caption in transcript.Captions)
+            {
+                transcriptText.Append(caption.Text).Append(' ');
+            }
+            return transcriptText.ToString();
+        }
+        catch (InvalidOperationException)
+        {
+            // This exception is thrown by GetByLanguage if the language is not found
             return null;
         }
-
-        var transcript = await _youtube.Videos.ClosedCaptions.GetAsync(trackInfo);
-        var transcriptText = new StringBuilder();
-        foreach (var caption in transcript.Captions)
-        {
-            transcriptText.Append(caption.Text).Append(' ');
-        }
-
-        return transcriptText.ToString();
     }
 }

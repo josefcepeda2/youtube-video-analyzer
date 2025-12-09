@@ -1,11 +1,6 @@
-using Xunit;
 using Moq;
-using System.Threading.Tasks;
-using YoutubeExplode;
 using YoutubeExplode.Videos;
 using YoutubeExplode.Videos.ClosedCaptions;
-using System.Collections.Generic;
-using System.Text;
 using YoutubeExplode.Common;
 
 public class TranscriptServiceTests
@@ -13,18 +8,67 @@ public class TranscriptServiceTests
     [Fact]
     public async Task GetTranscriptAsync_WhenEnglishTranscriptExists_ReturnsTranscript()
     {
-        // This test is more complex because YoutubeExplode's client is not easily mockable.
-        // A full implementation would require wrapping their client in an interface.
-        // For this project, we'll assume the happy path works and focus on the analyzer test.
-        await Task.CompletedTask;
+        // Arrange
+        var mockYouTubeClient = new Mock<IYouTubeClient>();
+        var videoUrl = "https://www.youtube.com/watch?v=test";
+        var trackInfo = new ClosedCaptionTrackInfo("https://example.com",  new Language("en", "English"), false);
+        var manifest = new ClosedCaptionManifest(new[] { trackInfo });
+        var captions = new List<ClosedCaption>
+        {
+            new ClosedCaption("Hello", TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1), Array.Empty<ClosedCaptionPart>()),
+            new ClosedCaption("world", TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(1), Array.Empty<ClosedCaptionPart>())
+        };
+        var track = new ClosedCaptionTrack(captions);
+
+        mockYouTubeClient.Setup(c => c.GetClosedCaptionManifestAsync(It.IsAny<string>())).ReturnsAsync(manifest);
+        mockYouTubeClient.Setup(c => c.GetClosedCaptionTrackAsync(trackInfo)).ReturnsAsync(track);
+
+        var service = new TranscriptService(mockYouTubeClient.Object);
+
+        // Act
+        var result = await service.GetTranscriptAsync(videoUrl);
+
+        // Assert
+        Assert.Equal("Hello world ", result);
     }
 
     [Fact]
     public async Task GetTranscriptAsync_WhenNoEnglishTranscript_ReturnsNull()
     {
-        // This test is more complex because YoutubeExplode's client is not easily mockable.
-        // A full implementation would require wrapping their client in an interface.
-        // For this project, we'll assume the happy path works and focus on the analyzer test.
-        await Task.CompletedTask;
+        // Arrange
+        var mockYouTubeClient = new Mock<IYouTubeClient>();
+        var videoUrl = "https://www.youtube.com/watch?v=test";
+        var manifest = new ClosedCaptionManifest(new ClosedCaptionTrackInfo[0]);
+
+        mockYouTubeClient.Setup(c => c.GetClosedCaptionManifestAsync(It.IsAny<string>())).ReturnsAsync(manifest);
+
+        var service = new TranscriptService(mockYouTubeClient.Object);
+
+        // Act
+        var result = await service.GetTranscriptAsync(videoUrl);
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetVideoInfoAsync_ReturnsVideoInfo()
+    {
+        // Arrange
+        var mockYouTubeClient = new Mock<IYouTubeClient>();
+        var videoUrl = "https://www.youtube.com/watch?v=test";
+        var author = new Author("UC_x5XG1OV2P6uZZ5FSM9Ttw", "Test Author");
+        var engagement = new Engagement(0, 0, 0);
+        var video = new Video(new VideoId(videoUrl), "Test Title", author, DateTimeOffset.Now, "Test Description", TimeSpan.FromMinutes(5), new Thumbnail[] { }, new List<string>(), engagement);
+
+        mockYouTubeClient.Setup(c => c.GetVideoAsync(It.IsAny<string>())).ReturnsAsync(video);
+
+        var service = new TranscriptService(mockYouTubeClient.Object);
+
+        // Act
+        var result = await service.GetVideoInfoAsync(videoUrl);
+
+        // Assert
+        Assert.Equal("Test Title", result.Title);
     }
 }
