@@ -1,4 +1,4 @@
-Of course. Here is a detailed analysis and summary of the YouTube video on spec-driven development with Curo.
+
 
 ### Video Details
 *   **Title:** Spec-driven development: Shaping the next generation of AI software
