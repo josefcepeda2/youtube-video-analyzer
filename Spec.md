@@ -11,6 +11,4 @@
     1. Ability to read in a file containing you tube urls
     2. Ability to send each url over to the gemini llm to be analyzed. A specific prompt should be used
     3. For each video analyzed, the results of the analysis should be saved in Goole docs if possible, otherwise save it locally as a markdown file
-
-4. Here is a the list of urls. It is saved in a google doc file: https://docs.google.com/document/d/1gRyOeM6yrnzYzLXSx8ok4iSizycXvJLBQ_jVCG9LLYw/edit?tab=t.0
 ```
